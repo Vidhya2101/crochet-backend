@@ -7,6 +7,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from .models import User, Category, Product, ProductVariant, Order, OrderItem
 from . import db
 
+import razorpay
+
+client = razorpay.Client(auth=("rzp_test_SkELBDGrbux8Fi", "w3kfiuO4wFZU59jlG0uxJf9n"))
+
 # create blueprint
 main = Blueprint('main', __name__)
 
@@ -193,3 +197,35 @@ def place_order():
     db.session.commit()
 
     return {"message": "Order placed", "total": total_amount}
+
+@main.route('/create-payment', methods=['POST'])
+@jwt_required()
+def create_payment():
+    data = request.json
+
+    amount = int(data['amount'] * 100)  # convert to paisa
+
+    payment = client.order.create({
+        "amount": amount,
+        "currency": "INR",
+        "payment_capture": 1
+    })
+
+    return payment
+
+@main.route('/verify-payment', methods=['POST'])
+@jwt_required()
+def verify_payment():
+    data = request.json
+
+    try:
+        client.utility.verify_payment_signature({
+            'razorpay_order_id': data['order_id'],
+            'razorpay_payment_id': data['payment_id'],
+            'razorpay_signature': data['signature']
+        })
+
+        return {"message": "Payment successful"}
+
+    except:
+        return {"error": "Payment verification failed"}, 400
