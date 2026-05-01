@@ -4,7 +4,7 @@ from flask_jwt_extended import create_access_token
 import bcrypt
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from .models import User, Category, Product, ProductVariant
+from .models import User, Category, Product, ProductVariant, Order, OrderItem
 from . import db
 
 # create blueprint
@@ -153,3 +153,43 @@ def get_products():
         })
 
     return result
+
+@main.route('/place-order', methods=['POST'])
+@jwt_required()
+def place_order():
+    user_id = int(get_jwt_identity())
+    data = request.json
+
+    total_amount = 0
+    order = Order(user_id=user_id, total_amount=0)
+
+    db.session.add(order)
+    db.session.flush()  # to get order.id
+
+    for item in data['items']:
+        variant = ProductVariant.query.get(item['variant_id'])
+
+        if not variant:
+            return {"error": "Variant not found"}, 404
+
+        if variant.stock < item['quantity']:
+            return {"error": "Not enough stock"}, 400
+
+        # reduce stock
+        variant.stock -= item['quantity']
+
+        order_item = OrderItem(
+            order_id=order.id,
+            product_variant_id=variant.id,
+            quantity=item['quantity'],
+            price=variant.price
+        )
+
+        total_amount += variant.price * item['quantity']
+        db.session.add(order_item)
+
+    order.total_amount = total_amount
+
+    db.session.commit()
+
+    return {"message": "Order placed", "total": total_amount}

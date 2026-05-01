@@ -37,3 +37,22 @@ class ProductVariant(db.Model):
     color = db.Column(db.String(50))
     stock = db.Column(db.Integer, default=0)
     price = db.Column(db.Float)
+
+# 🛒 Order
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    total_amount = db.Column(db.Float)
+    status = db.Column(db.String(50), default="pending")
+
+    items = db.relationship('OrderItem', backref='order', lazy=True)
+
+
+# 📦 Order Items
+class OrderItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+    product_variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.id'))
+
+    quantity = db.Column(db.Integer)
+    price = db.Column(db.Float)
