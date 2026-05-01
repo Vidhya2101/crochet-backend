@@ -56,12 +56,44 @@ def profile():
 
     return {"message": f"Welcome user {user.name}"}
 
+# @main.route('/add-product', methods=['POST'])
+# @jwt_required()
+# def add_product():
+#     data = request.json
+
+#     category = Category.query.filter_by(name=data['category']).first()
+
+#     if not category:
+#         return {"error": "Category not found"}, 404
+
+#     product = Product(
+#         name=data['name'],
+#         description=data.get('description'),
+#         base_price=data['base_price'],
+#         category_id=category.id
+#     )
+
+#     db.session.add(product)
+#     db.session.commit()
+
+#     return {"message": "Product added"}
+
+
 @main.route('/add-product', methods=['POST'])
 @jwt_required()
 def add_product():
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+
+    # 🔒 ADMIN CHECK
+    if user.role != "admin":
+        return {"error": "Only admin can add products"}, 403
+
     data = request.json
 
-    category = Category.query.filter_by(name=data['category']).first()
+    category = Category.query.filter(
+        Category.name.ilike(data['category'].strip())
+    ).first()
 
     if not category:
         return {"error": "Category not found"}, 404
@@ -81,6 +113,12 @@ def add_product():
 @main.route('/add-variant', methods=['POST'])
 @jwt_required()
 def add_variant():
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+
+    if user.role != "admin":
+        return {"error": "Only admin can add variants"}, 403
+    
     data = request.json
 
     product = Product.query.filter_by(name=data['product']).first()
