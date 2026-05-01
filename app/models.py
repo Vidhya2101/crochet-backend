@@ -44,6 +44,7 @@ class Order(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     total_amount = db.Column(db.Float)
     status = db.Column(db.String(50), default="pending")
+    payment_id = db.Column(db.String(200))
 
     items = db.relationship('OrderItem', backref='order', lazy=True)
 

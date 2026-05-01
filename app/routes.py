@@ -203,6 +203,13 @@ def place_order():
 def create_payment():
     data = request.json
 
+    order_id = data['order_id']
+
+    order = Order.query.get(order_id)
+
+    if not order:
+        return {"error": "Order not found"}, 404
+
     amount = int(data['amount'] * 100)  # convert to paisa
 
     payment = client.order.create({
@@ -211,7 +218,10 @@ def create_payment():
         "payment_capture": 1
     })
 
-    return payment
+    return {
+        "razorpay_order_id": payment['id'],
+        "amount": payment['amount']
+    }
 
 @main.route('/verify-payment', methods=['POST'])
 @jwt_required()
@@ -225,7 +235,47 @@ def verify_payment():
             'razorpay_signature': data['signature']
         })
 
-        return {"message": "Payment successful"}
+        # find order using your system order id
+        order = Order.query.get(data['db_order_id'])
+
+        order.status = "paid"
+        order.payment_id = data['payment_id']
+
+        db.session.commit()
+
+        return {"message": "Payment successful, order updated"}
 
     except:
         return {"error": "Payment verification failed"}, 400
+    
+@main.route('/my-orders', methods=['GET'])
+@jwt_required()
+def my_orders():
+    user_id = int(get_jwt_identity())
+
+    orders = Order.query.filter_by(user_id=user_id).all()
+
+    result = []
+
+    for order in orders:
+        items = []
+
+        for item in order.items:
+            variant = ProductVariant.query.get(item.product_variant_id)
+            product = variant.product
+
+            items.append({
+                "product_name": product.name,
+                "color": variant.color,
+                "quantity": item.quantity,
+                "price": item.price
+            })
+
+        result.append({
+            "order_id": order.id,
+            "total": order.total_amount,
+            "status": order.status,
+            "items": items
+        })
+
+    return result
