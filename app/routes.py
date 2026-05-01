@@ -4,7 +4,7 @@ from flask_jwt_extended import create_access_token
 import bcrypt
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from .models import User
+from .models import User, Category, Product, ProductVariant
 from . import db
 
 # create blueprint
@@ -55,3 +55,63 @@ def profile():
     user = User.query.get(int(user_id))
 
     return {"message": f"Welcome user {user.name}"}
+
+@main.route('/add-product', methods=['POST'])
+@jwt_required()
+def add_product():
+    data = request.json
+
+    category = Category.query.filter_by(name=data['category']).first()
+
+    if not category:
+        return {"error": "Category not found"}, 404
+
+    product = Product(
+        name=data['name'],
+        description=data.get('description'),
+        base_price=data['base_price'],
+        category_id=category.id
+    )
+
+    db.session.add(product)
+    db.session.commit()
+
+    return {"message": "Product added"}
+
+@main.route('/add-variant', methods=['POST'])
+@jwt_required()
+def add_variant():
+    data = request.json
+
+    product = Product.query.filter_by(name=data['product']).first()
+
+    if not product:
+        return {"error": "Product not found"}, 404
+
+    variant = ProductVariant(
+        product_id=product.id,
+        color=data['color'],
+        stock=data['stock'],
+        price=data['price']
+    )
+
+    db.session.add(variant)
+    db.session.commit()
+
+    return {"message": "Variant added"}
+
+@main.route('/products', methods=['GET'])
+def get_products():
+    products = Product.query.all()
+
+    result = []
+
+    for p in products:
+        result.append({
+            "id": p.id,
+            "name": p.name,
+            "category": p.category.name,
+            "base_price": p.base_price
+        })
+
+    return result
