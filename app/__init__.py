@@ -1,3 +1,4 @@
+import os
 from flask import Flask, app
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -12,12 +13,12 @@ migrate = Migrate()
 def create_app():
     app = Flask(__name__)
 
-    app.config['JWT_SECRET_KEY'] = "super-secret-key"
+    app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 
     jwt.init_app(app)
 
     # database connection
-    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:1234@localhost:5432/crochet_db"
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # connect db to app

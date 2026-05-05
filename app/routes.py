@@ -1,4 +1,5 @@
 from flask import Blueprint
+import os
 from flask import request
 from flask_jwt_extended import create_access_token
 import bcrypt
@@ -9,8 +10,9 @@ from . import db
 
 import razorpay
 
-client = razorpay.Client(auth=("rzp_test_SkELBDGrbux8Fi", "w3kfiuO4wFZU59jlG0uxJf9n"))
-
+client = razorpay.Client(
+    auth=(os.getenv("RAZORPAY_KEY_ID"), os.getenv("RAZORPAY_KEY_SECRET"))
+)
 # create blueprint
 main = Blueprint('main', __name__)
 
