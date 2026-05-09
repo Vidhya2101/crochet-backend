@@ -198,7 +198,11 @@ def place_order():
 
     db.session.commit()
 
-    return {"message": "Order placed", "total": total_amount}
+    return {
+    "message": f"Your order is confirmed with order ID {order.id}",
+    "order_id": order.id,
+    "total": total_amount
+}
 
 @main.route('/create-payment', methods=['POST'])
 @jwt_required()
@@ -212,7 +216,7 @@ def create_payment():
     if not order:
         return {"error": "Order not found"}, 404
 
-    amount = int(data['amount'] * 100)  # convert to paisa
+    amount = int(order.total_amount * 100)  # convert to paisa
 
     payment = client.order.create({
         "amount": amount,
