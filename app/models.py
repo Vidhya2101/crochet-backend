@@ -1,6 +1,5 @@
 from . import db
 
-# 👤 User
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
@@ -9,7 +8,7 @@ class User(db.Model):
     role = db.Column(db.String(20), default="customer")
 
 
-# 🗂️ Category
+
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True)
@@ -17,7 +16,7 @@ class Category(db.Model):
     products = db.relationship('Product', backref='category', lazy=True)
 
 
-# 🧶 Product
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200))
@@ -29,7 +28,7 @@ class Product(db.Model):
     variants = db.relationship('ProductVariant', backref='product', lazy=True)
 
 
-# 🎨 Product Variant (color + stock)
+
 class ProductVariant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
@@ -38,7 +37,7 @@ class ProductVariant(db.Model):
     stock = db.Column(db.Integer, default=0)
     price = db.Column(db.Float)
 
-# 🛒 Order
+
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -49,7 +48,7 @@ class Order(db.Model):
     items = db.relationship('OrderItem', backref='order', lazy=True)
 
 
-# 📦 Order Items
+
 class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
